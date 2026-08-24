@@ -149,13 +149,11 @@ public class FileSystemUtils {
    * Returns a path where Chart.yaml file is located.
    * This is a version for SonarQube and SonarCloud context.
    */
-  @Nullable
-  public static Path retrieveHelmProjectFolder(Path inputFilePath, FileSystem fileSystem) {
+  public static @Nullable Path retrieveHelmProjectFolder(Path inputFilePath, FileSystem fileSystem) {
     return retrieveHelmProjectFolder(inputFilePath, fileSystem, Files::exists);
   }
 
-  @Nullable
-  public static Path retrieveHelmProjectFolder(@Nullable Path inputFilePath, FileSystem fileSystem, Predicate<Path> chartYamlExist) {
+  public static @Nullable Path retrieveHelmProjectFolder(@Nullable Path inputFilePath, FileSystem fileSystem, Predicate<Path> chartYamlExist) {
     if (inputFilePath == null) {
       return null;
     }
