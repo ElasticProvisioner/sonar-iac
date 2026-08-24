@@ -27,5 +27,6 @@ sonar {
         property("sonar.links.ci", "https://github.com/SonarSource/sonar-iac-enterprise/actions")
         property("sonar.links.scm", "https://github.com/SonarSource/sonar-iac-enterprise")
         property("sonar.links.issue", "https://jira.sonarsource.com/projects/SONARIAC")
+        property("sonar.sca.exclusions", "**/its/**,**/test/resources/**")
     }
 }
