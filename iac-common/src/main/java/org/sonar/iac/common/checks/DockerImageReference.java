@@ -142,6 +142,10 @@ public record DockerImageReference(@Nullable String registry, String repository,
     return digest == null && (tag == null || "latest".equals(tag));
   }
 
+  public static boolean isLatest(String fullImageName) {
+    return parse(fullImageName).map(DockerImageReference::isLatest).orElse(false);
+  }
+
   public boolean hasSpecificVersion() {
     return tag != null && !tag.isBlank() && !"latest".equals(tag);
   }

@@ -12,6 +12,16 @@ spec:
     - name: compliant_with_fixed_tag_2
       image: gcr.io/istio-testing/metallb/controller:v0.14.3
 
+    - name: compliant_with_registry_port_and_fixed_tag
+      image: myregistry.local:5000/nginx:1.19
+
+    - name: compliant_with_registry_port_and_digest_no_tag
+      image: myregistry.local:5000/nginx@sha256:45b23dee08af5e43a7fea6c4cf9c25ccf269ee113168c19722f87876677c5cb2
+
+    - name: non_compliant_hub_namespace_without_tag
+      image: bitnami/postgresql # Noncompliant {{Use a specific version tag for the image.}}
+#            ^^^^^^^^^^^^^^^^^^
+
     - name: compliant_should_not_fail_and_raise
       image: "nginx:"
 
@@ -33,3 +43,6 @@ spec:
     - name: non_compliant_with_latest_tag
       image: nginx:latest # Noncompliant {{Use a specific version tag for the image instead of "latest".}}
 #            ^^^^^^^^^^^^
+    - name: non_compliant_with_registry_port_and_no_tag
+      image: myregistry.local:5000/nginx # Noncompliant {{Use a specific version tag for the image.}}
+#            ^^^^^^^^^^^^^^^^^^^^^^^^^^^

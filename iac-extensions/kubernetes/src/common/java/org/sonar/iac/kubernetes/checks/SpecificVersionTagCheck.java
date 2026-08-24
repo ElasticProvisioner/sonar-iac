@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 import org.sonar.check.Rule;
+import org.sonar.iac.common.checks.DockerImageReference;
 import org.sonar.iac.common.checks.TextUtils;
 import org.sonar.iac.common.yaml.object.BlockObject;
 import org.sonar.iac.common.yaml.tree.TupleTree;
@@ -71,11 +72,11 @@ public class SpecificVersionTagCheck extends AbstractKubernetesObjectCheck {
   }
 
   public static boolean hasSensitiveVersionTag(String fullImageName) {
-    var tagInfo = parseImageReference(fullImageName);
-    if (!tagInfo.shouldProcess) {
+    // unresolved with Helm: do not raise an issue
+    if (fullImageName.startsWith("$")) {
       return false;
     }
-    return isSensitiveVersionTag(tagInfo.tag);
+    return DockerImageReference.isLatest(withPlaceholderNameIfMissing(fullImageName));
   }
 
   public static boolean isSensitiveVersionTag(@Nullable String tag) {
@@ -86,26 +87,15 @@ public class SpecificVersionTagCheck extends AbstractKubernetesObjectCheck {
   @Nullable
   private static String extractTag(YamlTree tree) {
     var imageValue = TextUtils.getValue(tree).orElse("");
-    var tagInfo = parseImageReference(imageValue);
-    return tagInfo.shouldProcess ? tagInfo.tag : null;
+    return DockerImageReference.parse(withPlaceholderNameIfMissing(imageValue)).map(DockerImageReference::tag).orElse(null);
   }
 
-  private static ImageTagInfo parseImageReference(String imageReference) {
-    // image name is empty, unresolved with Helm, or using digest: do not raise an issue
-    if (imageReference.isBlank() || imageReference.contains("@") || imageReference.startsWith("$")) {
-      return new ImageTagInfo(false, null);
+  // Helm substitutes an unresolved "{{ .Values.x }}" image name with an empty string, e.g. ":latest" - DockerImageReference
+  // requires a non-blank name, but this check only cares about the tag/digest, so a placeholder name is good enough.
+  private static String withPlaceholderNameIfMissing(String imageReference) {
+    if (imageReference.startsWith(":") || imageReference.startsWith("@")) {
+      return "unresolved" + imageReference;
     }
-
-    if (imageReference.contains(":")) {
-      var parts = imageReference.split(":", 2);
-      String tag = parts.length > 1 ? parts[1] : null;
-      return new ImageTagInfo(true, tag);
-    }
-
-    // no version tag specified, kubernetes assumes "latest"
-    return new ImageTagInfo(true, null);
-  }
-
-  private record ImageTagInfo(boolean shouldProcess, @Nullable String tag) {
+    return imageReference;
   }
 }

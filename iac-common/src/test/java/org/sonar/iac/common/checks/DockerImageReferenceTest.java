@@ -167,6 +167,16 @@ class DockerImageReferenceTest {
   }
 
   @Test
+  void shouldRecognizeLatestFromRawStringWithoutParsingFirst() {
+    assertThat(DockerImageReference.isLatest("ubuntu")).isTrue();
+    assertThat(DockerImageReference.isLatest("ubuntu:20.04")).isFalse();
+    assertThat(DockerImageReference.isLatest(":bar")).isFalse();
+    assertThat(DockerImageReference.isLatest("ubuntu@sha256:06b5d30fabc1")).isFalse();
+    assertThat(DockerImageReference.isLatest("customHost:8080/repo:1.2.3")).isFalse();
+    assertThat(DockerImageReference.isLatest("customHost:8080/repo")).isTrue();
+  }
+
+  @Test
   void shouldNotRecognizeLatestWhenPinnedByDigest() {
     // A digest always pins the image, even without a tag or with an explicit "latest" tag.
     assertThat(DockerImageReference.parse("ubuntu@sha256:06b5d30fabc1").orElseThrow().isLatest()).isFalse();
