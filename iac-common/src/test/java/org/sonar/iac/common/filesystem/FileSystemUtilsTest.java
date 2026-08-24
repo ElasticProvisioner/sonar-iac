@@ -217,7 +217,7 @@ class FileSystemUtilsTest {
    * {@code /var}, a symlinked CI workspace, or (with the short and long form swapped) a Windows 8.3 base directory.
    */
   @Test
-  void shouldReadReferencedFileWhenProjectRootIsReachedThroughSymlink() throws IOException {
+  void shouldReadReferencedFileWhenProjectRootIsReachedThroughSymlink() {
     var symlinkedBaseDir = symlink(baseDir.getParent().resolve("symlinked-project"), baseDir);
     var symlinkedContext = SensorContextTester.create(symlinkedBaseDir);
     symlinkedContext.fileSystem().add(inputFile("app/requirements.txt", symlinkedBaseDir, "flask==3.1.0 --hash=sha256:abc", null));
@@ -233,7 +233,7 @@ class FileSystemUtilsTest {
    */
   @Test
   @DisabledOnOs(value = OS.WINDOWS, disabledReason = "getCanonicalFile() does not dereference symlinks/junctions on Windows, a known and accepted gap")
-  void shouldReadReferencedFileIndexedUnderItsRealPathWhenReferencedThroughSymlink() throws IOException {
+  void shouldReadReferencedFileIndexedUnderItsRealPathWhenReferencedThroughSymlink() {
     indexFile("app/requirements.txt", "flask==3.1.0 --hash=sha256:abc");
     var symlinkedBaseDir = symlink(baseDir.getParent().resolve("symlinked-project"), baseDir);
     var analyzedFile = inputFile("app/Dockerfile", symlinkedBaseDir, "FROM python", null);
@@ -243,7 +243,7 @@ class FileSystemUtilsTest {
   }
 
   @Test
-  void shouldNotReadReferencedFileLeavingWorkingDirectoryThroughSymlink() throws IOException {
+  void shouldNotReadReferencedFileLeavingWorkingDirectoryThroughSymlink() {
     context.fileSystem().add(inputFile("secret.txt", baseDir.getParent(), "flask==3.1.0 --hash=sha256:abc", null));
     // The link sits inside the working directory but points outside of it
     symlink(baseDir.resolve("outside"), baseDir.getParent());
