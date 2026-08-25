@@ -1,5 +1,5 @@
 [versions]
-sonar-scanner-engine = "13.4.1.4007"
+sonar-scanner-engine = "13.8.0.4534"
 sonarqube = "26.2.0.119303"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
