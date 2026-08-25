@@ -74,6 +74,8 @@ public class PrivilegedUserCheck implements IacCheck {
   private static final Set<String> SAFE_HUB_NAMESPACES = Set.of("bitnami");
   private static final String GOOGLE_CONTAINER_REGISTRY = "gcr.io";
   private static final String DISTROLESS_NAMESPACE = "distroless";
+  private static final String MICROSOFT_REGISTRY = "mcr.microsoft.com";
+  private static final Set<String> DOTNET_ROOTLESS_REPOSITORIES = Set.of("dotnet/aspnet", "dotnet/runtime", "dotnet/runtime-deps");
 
   // Commands whose invocation in a RUN signals the dockerfile drops privileges later (or sets up a separate user).
   private static final Set<String> PRIVILEGE_DROP_COMMANDS = Set.of("gosu", "su-exec", "useradd", "adduser", "setpriv");
@@ -218,7 +220,7 @@ public class PrivilegedUserCheck implements IacCheck {
       ctx.reportIssue(reportLocation, MESSAGE_SCRATCH);
     } else if (isUnsafeImage(imageName) && !isUserSafeImage(imageName)) {
       ctx.reportIssue(reportLocation, String.format(MESSAGE_UNSAFE_DEFAULT_ROOT, imageName));
-    } else if (isMicrosoftUnsafeImage(image)) {
+    } else if (isMicrosoftUnsafeImage(image) && !isMicrosoftRootlessImage(image)) {
       ctx.reportIssue(reportLocation, MESSAGE_MICROSOFT_DEFAULT_ROOT);
     } else if (!isSafeImage(image)) {
       ctx.reportIssue(reportLocation, MESSAGE_OTHER_IMAGE);
@@ -395,7 +397,8 @@ public class PrivilegedUserCheck implements IacCheck {
 
   private boolean isSafeImage(DockerImageReference image) {
     String imageName = image.withoutTagOrDigest();
-    return SAFE_IMAGES.contains(imageName) || isSafeNamespace(image) || isUserSafeImage(imageName) || isDistrolessNonRootImage(image);
+    return SAFE_IMAGES.contains(imageName) || isSafeNamespace(image) || isUserSafeImage(imageName) || isDistrolessNonRootImage(image)
+      || isMicrosoftRootlessImage(image);
   }
 
   private static boolean isSafeNamespace(DockerImageReference image) {
@@ -414,11 +417,19 @@ public class PrivilegedUserCheck implements IacCheck {
       && tag != null && (tag.startsWith("nonroot") || tag.startsWith("debug-nonroot"));
   }
 
+  // Chiseled (Ubuntu) and distroless (Azure Linux) .NET images run as non-root by default:
+  // https://github.com/dotnet/dotnet-docker/blob/main/documentation/distroless.md
+  private static boolean isMicrosoftRootlessImage(DockerImageReference image) {
+    String tag = image.tag();
+    return MICROSOFT_REGISTRY.equals(image.registryHost()) && DOTNET_ROOTLESS_REPOSITORIES.contains(image.repository())
+      && tag != null && (tag.contains("chiseled") || tag.contains(DISTROLESS_NAMESPACE));
+  }
+
   private boolean isUserSafeImage(String imageName) {
     return userSafeImages().contains(imageName);
   }
 
   private static boolean isMicrosoftUnsafeImage(DockerImageReference image) {
-    return "mcr.microsoft.com".equals(image.registryHost());
+    return MICROSOFT_REGISTRY.equals(image.registryHost());
   }
 }

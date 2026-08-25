@@ -1,0 +1,3 @@
+# chiseled (Ubuntu) .NET images run as non-root by default
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
+ENTRYPOINT ["dotnet", "app.dll"]

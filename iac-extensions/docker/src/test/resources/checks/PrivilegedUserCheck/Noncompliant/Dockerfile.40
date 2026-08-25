@@ -1,0 +1,4 @@
+# distroless-looking tag, but the sdk repository has no rootless variant
+# Noncompliant@+1 {{This image runs with "root" or "containerAdministrator" as the default user. Make sure it is safe here.}}
+FROM mcr.microsoft.com/dotnet/sdk:10.0-azurelinux3.0-distroless
+ENTRYPOINT ["dotnet", "app.dll"]

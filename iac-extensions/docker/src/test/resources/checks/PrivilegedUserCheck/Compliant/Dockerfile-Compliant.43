@@ -1,0 +1,3 @@
+# chiseled tags with additional composite/extra suffixes are still safe
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-noble-chiseled-composite-extra
+ENTRYPOINT ["dotnet", "app.dll"]
