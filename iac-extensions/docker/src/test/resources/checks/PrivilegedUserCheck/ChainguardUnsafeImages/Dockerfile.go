@@ -1,0 +1,4 @@
+# "go" defaults to root, unlike the rest of the chainguard catalog.
+# Noncompliant@+1 {{This image might run with "root" as the default user. Make sure it is safe here.}}
+FROM cgr.dev/chainguard/go:1.23
+CMD ["id"]

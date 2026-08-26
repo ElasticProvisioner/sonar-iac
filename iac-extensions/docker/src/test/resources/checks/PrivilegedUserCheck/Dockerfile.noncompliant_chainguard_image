@@ -1,0 +1,4 @@
+# A different org's private cgr.dev namespace is not the public chainguard catalog, so it must still raise.
+# Noncompliant@+1 {{This image might run with "root" as the default user. Make sure it is safe here.}}
+FROM cgr.dev/acme-corp/node:18.18
+CMD ["id"]

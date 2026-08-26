@@ -38,15 +38,14 @@ import org.jspecify.annotations.Nullable;
  *     repository     tag
  * </pre>
  * The leading part of a multi-segment repository is its namespace, retrievable via {@link #namespace()};
- * the trailing segment has no field of its own:
+ * the trailing segment is retrievable via {@link #imageName()}:
  * <pre>
  * registry.gitlab.com/group/subgroup/project/image
  * ^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  *      registry                repository
- *                     ^^^^^^^^^^^^^^^^^^^^^^
- *                           namespace
+ *                     ^^^^^^^^^^^^^^^^^^^^^^ ^^^^^
+ *                           namespace        imageName
  * </pre>
- * There is no separate "image" field: an image is the repository resolved to a tag or digest, not its own component.
  */
 public record DockerImageReference(@Nullable String registry, String repository, @Nullable String tag, @Nullable String digest) {
 
@@ -125,6 +124,11 @@ public record DockerImageReference(@Nullable String registry, String repository,
   public String namespace() {
     int lastSlashIndex = repository.lastIndexOf('/');
     return lastSlashIndex < 0 ? null : repository.substring(0, lastSlashIndex);
+  }
+
+  public String imageName() {
+    int lastSlashIndex = repository.lastIndexOf('/');
+    return lastSlashIndex < 0 ? repository : repository.substring(lastSlashIndex + 1);
   }
 
   /**

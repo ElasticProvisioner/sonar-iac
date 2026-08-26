@@ -115,6 +115,14 @@ class DockerImageReferenceTest {
   }
 
   @Test
+  void shouldComputeImageNameAsLastRepositorySegment() {
+    assertThat(DockerImageReference.parse("ubuntu").orElseThrow().imageName()).isEqualTo("ubuntu");
+    assertThat(DockerImageReference.parse("bitnami/postgresql").orElseThrow().imageName()).isEqualTo("postgresql");
+    assertThat(DockerImageReference.parse("registry.gitlab.com/group/subgroup/project/image").orElseThrow().imageName())
+      .isEqualTo("image");
+  }
+
+  @Test
   void shouldParseLocalhostAsRegistry() {
     var ref = DockerImageReference.parse("localhost/custom/dotnet").orElseThrow();
     assertThat(ref.registry()).isEqualTo("localhost");

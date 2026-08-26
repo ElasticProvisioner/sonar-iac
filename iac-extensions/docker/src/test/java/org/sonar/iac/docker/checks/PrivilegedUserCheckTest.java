@@ -99,6 +99,26 @@ class PrivilegedUserCheckTest {
     DockerVerifier.verify("PrivilegedUserCheck/Dockerfile.noncompliant_docker_hardened_image", check);
   }
 
+  @Test
+  void testChainguardImageCompliant() {
+    DockerVerifier.verifyNoIssue("PrivilegedUserCheck/Dockerfile.compliant_chainguard_image", check);
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void testChainguardUnsafeImagesStillRaise(String testFile) {
+    DockerVerifier.verify(testFile, check);
+  }
+
+  static List<String> testChainguardUnsafeImagesStillRaise() {
+    return provideTestFiles("PrivilegedUserCheck/ChainguardUnsafeImages");
+  }
+
+  @Test
+  void testOtherChainguardNamespaceStillRaises() {
+    DockerVerifier.verify("PrivilegedUserCheck/Dockerfile.noncompliant_chainguard_image", check);
+  }
+
   private static List<String> provideTestFiles(String testFileDir) {
     try (Stream<Path> pathStream = Files.list(BASE_DIR.resolve(testFileDir))) {
       return pathStream

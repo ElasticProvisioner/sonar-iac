@@ -72,6 +72,11 @@ public class PrivilegedUserCheck implements IacCheck {
   private static final Set<String> SAFE_REGISTRIES = Set.of("dhi.io");
   // Docker Hub namespaces/organizations (not registry hosts) whose images run as a non-root user by default.
   private static final Set<String> SAFE_HUB_NAMESPACES = Set.of("bitnami");
+  // cgr.dev is multi-tenant (every customer org gets a private namespace too), so only the public "chainguard" namespace is trusted.
+  private static final String CHAINGUARD_REGISTRY = "cgr.dev";
+  private static final String CHAINGUARD_NAMESPACE = "chainguard";
+  // "go" and the apk-equipped OS base images default to root: https://images.chainguard.dev/directory/image/go/specifications.
+  private static final Set<String> CHAINGUARD_UNSAFE_IMAGES = Set.of("go", "wolfi-base", "chainguard-base", "chainguard-base-fips");
   private static final String GOOGLE_CONTAINER_REGISTRY = "gcr.io";
   private static final String DISTROLESS_NAMESPACE = "distroless";
   private static final String MICROSOFT_REGISTRY = "mcr.microsoft.com";
@@ -403,11 +408,18 @@ public class PrivilegedUserCheck implements IacCheck {
 
   private static boolean isSafeNamespace(DockerImageReference image) {
     String registryHost = image.registryHost();
-    if (registryHost != null) {
-      return SAFE_REGISTRIES.contains(registryHost);
+    if (registryHost == null) {
+      String namespace = image.namespace();
+      return namespace != null && SAFE_HUB_NAMESPACES.contains(namespace);
     }
-    String namespace = image.namespace();
-    return namespace != null && SAFE_HUB_NAMESPACES.contains(namespace);
+    if (CHAINGUARD_REGISTRY.equals(registryHost)) {
+      return isSafeChainguardImage(image);
+    }
+    return SAFE_REGISTRIES.contains(registryHost);
+  }
+
+  private static boolean isSafeChainguardImage(DockerImageReference image) {
+    return CHAINGUARD_NAMESPACE.equals(image.namespace()) && !CHAINGUARD_UNSAFE_IMAGES.contains(image.imageName());
   }
 
   // Distroless images (https://github.com/googlecontainertools/distroless) are safe only when nonroot-tagged.
