@@ -17,6 +17,10 @@
 package org.sonar.iac.common.yaml.tree;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.sonar.iac.common.checks.TextUtils;
+import org.sonar.iac.common.checks.Trilean;
 import org.sonar.iac.common.yaml.YamlTreeTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +53,7 @@ class ScalarTreeImplTest extends YamlTreeTest {
   @Test
   void shouldParseLiteral() {
     ScalarTree tree = parse("| \n a", ScalarTree.class);
-    assertThat(tree.value()).isEqualTo("a");
+    assertThat(tree.value()).isEqualTo("a\n");
     assertThat(tree.children()).isEmpty();
     assertThat(tree.metadata().tag()).isEqualTo("tag:yaml.org,2002:str");
     assertThat(tree.textRange()).hasRange(1, 0, 2, 2);
@@ -60,7 +64,7 @@ class ScalarTreeImplTest extends YamlTreeTest {
   @Test
   void shouldParseFolded() {
     ScalarTree tree = parse("> \n a", ScalarTree.class);
-    assertThat(tree.value()).isEqualTo("a");
+    assertThat(tree.value()).isEqualTo("a\n");
     assertThat(tree.children()).isEmpty();
     assertThat(tree.metadata().tag()).isEqualTo("tag:yaml.org,2002:str");
     assertThat(tree.textRange()).hasRange(1, 0, 2, 2);
@@ -88,5 +92,47 @@ class ScalarTreeImplTest extends YamlTreeTest {
     assertThat(tree.textRange()).hasRange(1, 0, 1, 3);
     assertThat(tree.toHighlight()).hasRange(1, 0, 1, 3);
     assertThat(tree.style()).isEqualTo(ScalarTree.Style.PLAIN);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+    // language=yaml
+    strings = {
+      "| \n a",
+      "| \n a\n",
+      "> \n a",
+      "> \n a\n",
+    })
+  void shouldKeepFinalLineBreakOfBlockScalarWithClipChomping(String source) {
+    ScalarTree tree = parse(source, ScalarTree.class);
+    assertThat(tree.value()).isEqualTo("a\n");
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+    // language=yaml
+    strings = {
+      "|- \n a",
+      "|- \n a\n",
+      ">- \n a",
+      ">- \n a\n",
+    })
+  void shouldStripFinalLineBreakOfBlockScalarWithStripChomping(String source) {
+    ScalarTree tree = parse(source, ScalarTree.class);
+    assertThat(tree.value()).isEqualTo("a");
+  }
+
+  @Test
+  void shouldNotMatchClipChompedBlockScalarWithValueEqualityHelpers() {
+    var clipChomped = parseTuple("enabled: |\n  true\n").value();
+    var stripChomped = parseTuple("enabled: |-\n  true\n").value();
+
+    assertThat(TextUtils.isValue(clipChomped, "true")).isEqualTo(Trilean.FALSE);
+    assertThat(TextUtils.isValueTrue(clipChomped)).isFalse();
+    assertThat(TextUtils.isValue(stripChomped, "true")).isEqualTo(Trilean.TRUE);
+    assertThat(TextUtils.isValueTrue(stripChomped)).isTrue();
+
+    assertThat(TextUtils.getIntValue(parseTuple("port: |\n  8080\n").value())).isNotPresent();
+    assertThat(TextUtils.getIntValue(parseTuple("port: |-\n  8080\n").value())).contains(8080);
   }
 }

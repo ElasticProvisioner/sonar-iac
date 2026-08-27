@@ -83,6 +83,7 @@ class YamlParserTest {
   @ValueSource(
     // language=yaml
     strings = {
+      "--- ###",
       """
         foo:
           bar: baz
@@ -112,22 +113,22 @@ class YamlParserTest {
   @ValueSource(
     // language=yaml
     strings = {
-      "--- ###",
       "--- foo ###",
       "--- foo: bar ###",
     })
   void testSnakeyamlFailing(String input) {
     assertThatThrownBy(() -> parser.parse(input, inputFileContext))
-      .isOfAnyClassIn(ParserException.class, ScannerException.class, ClassCastException.class);
+      .isOfAnyClassIn(ParserException.class, ScannerException.class, ClassCastException.class, IndexOutOfBoundsException.class);
   }
 
   @ParameterizedTest
   @CsvSource(
     value = {
       "single-tab-indentation-without-nesting.json, true",
+      "single-tab-indentation.json, true",
       "single-tab-indentation.yaml, false",
       "double-tab-indentation.yaml, false",
-      "double-tab-indentation.json, false"
+      "double-tab-indentation.json, true"
     })
   void snakeYamlParsingFromResourceFileShouldHaveExpectedBehavior(String filename, boolean shouldParse) throws IOException {
     InputFile customInputFile = IacTestUtils.inputFile("parser/" + filename, "");
