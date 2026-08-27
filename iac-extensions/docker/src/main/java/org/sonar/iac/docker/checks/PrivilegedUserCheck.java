@@ -81,6 +81,9 @@ public class PrivilegedUserCheck implements IacCheck {
   private static final String DISTROLESS_NAMESPACE = "distroless";
   private static final String MICROSOFT_REGISTRY = "mcr.microsoft.com";
   private static final Set<String> DOTNET_ROOTLESS_REPOSITORIES = Set.of("dotnet/aspnet", "dotnet/runtime", "dotnet/runtime-deps");
+  private static final String AWS_PUBLIC_ECR_REGISTRY = "public.ecr.aws";
+  private static final String AWS_LAMBDA_NAMESPACE = "lambda";
+  private static final String AWS_LAMBDA_HUB_REPOSITORY_PREFIX = "amazon/aws-lambda-";
 
   // Commands whose invocation in a RUN signals the dockerfile drops privileges later (or sets up a separate user).
   private static final Set<String> PRIVILEGE_DROP_COMMANDS = Set.of("gosu", "su-exec", "useradd", "adduser", "setpriv");
@@ -410,16 +413,26 @@ public class PrivilegedUserCheck implements IacCheck {
     String registryHost = image.registryHost();
     if (registryHost == null) {
       String namespace = image.namespace();
-      return namespace != null && SAFE_HUB_NAMESPACES.contains(namespace);
+      return (namespace != null && SAFE_HUB_NAMESPACES.contains(namespace)) || isAwsLambdaHubImage(image);
     }
     if (CHAINGUARD_REGISTRY.equals(registryHost)) {
       return isSafeChainguardImage(image);
     }
-    return SAFE_REGISTRIES.contains(registryHost);
+    return SAFE_REGISTRIES.contains(registryHost) || isAwsLambdaEcrImage(image);
   }
 
   private static boolean isSafeChainguardImage(DockerImageReference image) {
     return CHAINGUARD_NAMESPACE.equals(image.namespace()) && !CHAINGUARD_UNSAFE_IMAGES.contains(image.imageName());
+  }
+
+  // Lambda assigns a least-privileged runtime user itself, independent of the image's own default user:
+  // https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-reqs
+  private static boolean isAwsLambdaEcrImage(DockerImageReference image) {
+    return AWS_PUBLIC_ECR_REGISTRY.equals(image.registryHost()) && AWS_LAMBDA_NAMESPACE.equals(image.namespace());
+  }
+
+  private static boolean isAwsLambdaHubImage(DockerImageReference image) {
+    return image.repository().startsWith(AWS_LAMBDA_HUB_REPOSITORY_PREFIX);
   }
 
   // Distroless images (https://github.com/googlecontainertools/distroless) are safe only when nonroot-tagged.

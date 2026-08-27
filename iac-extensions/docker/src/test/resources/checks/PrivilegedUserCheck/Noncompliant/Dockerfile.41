@@ -1,0 +1,3 @@
+# public.ecr.aws is a multi-tenant public registry; only the "lambda" namespace is trusted
+# Noncompliant@+1 {{This image might run with "root" as the default user. Make sure it is safe here.}}
+FROM public.ecr.aws/docker/library/nginx:latest
