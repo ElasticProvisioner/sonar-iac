@@ -29,7 +29,7 @@ spec:
       - name: curl
         image: curlimages/curl
         command: ["curl"]
-        args: ["http://example.com/"] # Noncompliant
+        args: ["http://sonar.com/"] # Noncompliant
 </pre>
 <h4>Compliant solution</h4>
 <pre data-diff-id="1" data-diff-type="compliant">
@@ -44,7 +44,7 @@ spec:
       - name: curl
         image: curlimages/curl
         command: ["curl"]
-        args: ["https://example.com/"]
+        args: ["https://sonar.com/"]
 </pre>
 <h2>Exceptions</h2>
 <p>No issue is reported for the following cases:</p>

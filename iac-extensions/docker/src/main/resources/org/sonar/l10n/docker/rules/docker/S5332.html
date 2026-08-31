@@ -18,11 +18,11 @@ redirecting users to malicious endpoints, injecting malicious content into respo
 interception.</p>
 <h4>Noncompliant code example</h4>
 <pre data-diff-id="1" data-diff-type="noncompliant">
-RUN curl http://www.example.com/ # Noncompliant
+RUN curl http://www.sonar.com/ # Noncompliant
 </pre>
 <h4>Compliant solution</h4>
 <pre data-diff-id="1" data-diff-type="compliant">
-RUN curl https://www.example.com/
+RUN curl https://www.sonar.com/
 </pre>
 <h2>Exceptions</h2>
 <p>No issue is reported for the following cases:</p>
