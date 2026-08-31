@@ -186,7 +186,7 @@ public class DuplicatedEnvironmentVariablesCheck extends AbstractResourceManagem
 
     @Override
     public int compareTo(AbstractVariable o) {
-      return tree.textRange().start().line() - o.tree.textRange().start().line();
+      return Integer.compare(tree.textRange().start().line(), o.tree.textRange().start().line());
     }
 
     abstract String primaryMessage(String variableName);

@@ -117,6 +117,6 @@ public class EncapsulatedVariableImpl extends AbstractDockerTreeImpl implements 
 
   @Override
   public int hashCode() {
-    return Objects.hash(openDollarCurly, identifier, modifierSeparator, modifier, closeCurly, symbol);
+    return Objects.hash(identifier, modifierSeparator, modifier, symbol);
   }
 }

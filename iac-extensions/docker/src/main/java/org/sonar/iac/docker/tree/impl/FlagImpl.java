@@ -95,6 +95,6 @@ public class FlagImpl extends AbstractDockerTreeImpl implements Flag {
 
   @Override
   public int hashCode() {
-    return Objects.hash(prefix, name, equals, value);
+    return Objects.hash(name, value);
   }
 }
