@@ -42,7 +42,12 @@ import org.sonar.scanner.plugin.api.impl.config.MapSettings;
 import org.sonar.scanner.plugin.api.impl.sensor.DefaultSensorDescriptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.sonar.iac.common.testing.IacTestUtils.SONARLINT_RUNTIME_9_9;
 import static org.sonar.iac.common.testing.IacTestUtils.SQS_HIDDEN_FILES_SUPPORTED_API_VERSION;
 import static org.sonar.iac.common.testing.IacTestUtils.SQS_WITHOUT_HIDDEN_FILES_SUPPORT_API_VERSION;
@@ -234,6 +239,86 @@ class DockerSensorTest extends ExtensionSensorTest {
     assertThat(visitors).doesNotHaveAnyElementsOfTypes(SyntaxHighlightingVisitor.class, MetricsVisitor.class);
   }
 
+  @Test
+  void shouldReportS8431WithoutDependencyManagementConfiguration() {
+    analyze(sensor("S8431"), dockerfileWithTagAndDigest());
+
+    assertThat(context.allIssues()).extracting(issue -> issue.ruleKey().rule()).containsExactly("S8431");
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyManagementConfigurationFiles")
+  void shouldSuppressS8431WithDependencyManagementConfigurationFile(String relativePath) {
+    analyze(sensor("S8431", "S1135"),
+      inputFileWithoutAssociatedLanguage(relativePath, "configuration"),
+      dockerfileWithTagAndDigest());
+
+    assertThat(context.allIssues()).extracting(issue -> issue.ruleKey().rule()).containsExactly("S1135");
+  }
+
+  static Stream<String> dependencyManagementConfigurationFiles() {
+    return Stream.of(
+      ".github/dependabot.yml",
+      ".github/dependabot.yaml",
+      "renovate.json",
+      "renovate.jsonc",
+      "renovate.json5",
+      ".github/renovate.json",
+      ".github/renovate.jsonc",
+      ".github/renovate.json5",
+      ".gitlab/renovate.json",
+      ".gitlab/renovate.jsonc",
+      ".gitlab/renovate.json5",
+      ".renovaterc",
+      ".renovaterc.json",
+      ".renovaterc.jsonc",
+      ".renovaterc.json5");
+  }
+
+  @ParameterizedTest
+  @MethodSource("nonRootDependencyManagementConfigurationFiles")
+  void shouldReportS8431WithNonRootDependencyManagementConfigurationFile(String relativePath) {
+    analyze(sensor("S8431"),
+      inputFileWithoutAssociatedLanguage(relativePath, "configuration"),
+      dockerfileWithTagAndDigest());
+
+    assertThat(context.allIssues()).extracting(issue -> issue.ruleKey().rule()).containsExactly("S8431");
+  }
+
+  static Stream<String> nonRootDependencyManagementConfigurationFiles() {
+    return Stream.of(
+      "docs/renovate.json",
+      "sub/.github/dependabot.yml");
+  }
+
+  @Test
+  void shouldNotInspectDependencyManagementConfigurationWhenS8431IsInactive() {
+    var fileSystem = spy(context.fileSystem());
+    var contextSpy = spy(context);
+    doReturn(fileSystem).when(contextSpy).fileSystem();
+
+    analyze(contextSpy, sensor("S1135"), dockerfileWithTagAndDigest());
+
+    verify(fileSystem, never()).hasFiles(any());
+    assertThat(context.allIssues()).extracting(issue -> issue.ruleKey().rule()).containsExactly("S1135");
+  }
+
+  @Test
+  void shouldReportS8431InSonarLintWhenNoDependencyManagementConfigurationIsIndexed() {
+    analyze(sonarLintContext, sonarLintSensor("S8431"), dockerfileWithTagAndDigest());
+
+    assertThat(sonarLintContext.allIssues()).extracting(issue -> issue.ruleKey().rule()).containsExactly("S8431");
+  }
+
+  @Test
+  void shouldReportS8431InSonarLintWhenDependencyManagementConfigurationIsIndexed() {
+    analyze(sonarLintContext, sonarLintSensor("S8431"),
+      inputFileWithoutAssociatedLanguage(".github/dependabot.yml", "version: 2"),
+      dockerfileWithTagAndDigest());
+
+    assertThat(sonarLintContext.allIssues()).extracting(issue -> issue.ruleKey().rule()).containsExactly("S8431");
+  }
+
   @Override
   protected String getActivationSettingKey() {
     return DockerSettings.ACTIVATION_KEY;
@@ -355,5 +440,12 @@ class DockerSensorTest extends ExtensionSensorTest {
     assertThat(context.getTelemetryProperties())
       .containsEntry("iac.docker.files.count", "2")
       .containsEntry("iac.docker.files.parsed", "1");
+  }
+
+  private InputFile dockerfileWithTagAndDigest() {
+    return inputFile("Dockerfile", """
+      # TODO update this image
+      FROM my-image:1.2.3@sha256:26c68657ccce2cb0a31b330cb0be2b5e108d467f641c62e13ab40cbec258c68d
+      """);
   }
 }

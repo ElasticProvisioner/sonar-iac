@@ -33,6 +33,7 @@ import org.sonar.iac.common.extension.DurationStatistics;
 import org.sonar.iac.common.extension.IacProjectSensor;
 import org.sonar.iac.common.extension.SonarRuntimeUtils;
 import org.sonar.iac.common.extension.analyzer.Analyzer;
+import org.sonar.iac.common.extension.visitors.ChecksVisitor;
 import org.sonar.iac.common.extension.visitors.InputFileContext;
 import org.sonar.iac.common.extension.visitors.TreeVisitor;
 import org.sonar.iac.common.predicates.FileType;
@@ -166,7 +167,7 @@ public class KubernetesSensor extends AbstractYamlLanguageSensor {
       statistics,
       helmProcessor,
       kubernetesParserStatistics,
-      new KubernetesChecksVisitor(checks, statistics, projectContextImpl, TestFileClassifier.of(sensorContext.config())),
+      new KubernetesChecksVisitor(ChecksVisitor.activeChecks(checks), statistics, projectContextImpl, TestFileClassifier.of(sensorContext.config())),
       sonarLintFileListener,
       sensorTelemetry);
   }

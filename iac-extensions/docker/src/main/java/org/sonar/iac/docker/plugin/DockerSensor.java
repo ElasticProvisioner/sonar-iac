@@ -39,6 +39,7 @@ import org.sonar.iac.common.extension.analyzer.SingleFileAnalyzer;
 import org.sonar.iac.common.extension.visitors.ChecksVisitor;
 import org.sonar.iac.common.extension.visitors.InputFileContext;
 import org.sonar.iac.common.extension.visitors.TreeVisitor;
+import org.sonar.iac.docker.checks.CombinedTagAndDigestCheck;
 import org.sonar.iac.docker.checks.DockerCheckList;
 import org.sonar.iac.docker.parser.DockerParser;
 import org.sonar.iac.docker.visitors.DockerHighlightingVisitor;
@@ -46,7 +47,24 @@ import org.sonar.iac.docker.visitors.DockerMetricsVisitor;
 import org.sonar.iac.docker.visitors.DockerSymbolVisitor;
 
 public class DockerSensor extends IacSensor {
-  private final Checks<IacCheck> checks;
+  private static final Set<String> BOT_CONFIG_PATHS = Set.of(
+    ".github/dependabot.yml",
+    ".github/dependabot.yaml",
+    "renovate.json",
+    "renovate.jsonc",
+    "renovate.json5",
+    ".github/renovate.json",
+    ".github/renovate.jsonc",
+    ".github/renovate.json5",
+    ".gitlab/renovate.json",
+    ".gitlab/renovate.jsonc",
+    ".gitlab/renovate.json5",
+    ".renovaterc",
+    ".renovaterc.json",
+    ".renovaterc.jsonc",
+    ".renovaterc.json5");
+
+  protected final Checks<IacCheck> checks;
 
   public DockerSensor(
     SonarRuntime sonarRuntime,
@@ -138,7 +156,7 @@ public class DockerSensor extends IacSensor {
     List<TreeVisitor<InputFileContext>> visitors = new ArrayList<>();
     visitors.add(new DockerSymbolVisitor());
     visitors.addAll(preCheckVisitors());
-    visitors.add(createChecksVisitor(checks, statistics));
+    visitors.add(createChecksVisitor(activeChecks(sensorContext), statistics));
     if (SonarRuntimeUtils.isNotSonarLintContext(sensorContext.runtime())) {
       visitors.add(new DockerMetricsVisitor(fileLinesContextFactory, noSonarFilter, sensorTelemetry));
       visitors.add(new DockerHighlightingVisitor());
@@ -146,8 +164,33 @@ public class DockerSensor extends IacSensor {
     return visitors;
   }
 
-  protected ChecksVisitor createChecksVisitor(Checks<IacCheck> checks, DurationStatistics statistics) {
-    return new ChecksVisitor(checks, statistics);
+  protected ChecksVisitor createChecksVisitor(List<ChecksVisitor.ActiveCheck> activeChecks, DurationStatistics statistics) {
+    return new ChecksVisitor(activeChecks, statistics);
+  }
+
+  private List<ChecksVisitor.ActiveCheck> activeChecks(SensorContext sensorContext) {
+    var activeChecks = ChecksVisitor.activeChecks(checks);
+    var s8431Active = activeChecks.stream()
+      .map(ChecksVisitor.ActiveCheck::check)
+      .anyMatch(CombinedTagAndDigestCheck.class::isInstance);
+    if (!s8431Active || !isUsingDependencyManagementBot(sensorContext)) {
+      return activeChecks;
+    }
+    return activeChecks.stream()
+      .filter(activeCheck -> !(activeCheck.check() instanceof CombinedTagAndDigestCheck))
+      .toList();
+  }
+
+  private static boolean isUsingDependencyManagementBot(SensorContext sensorContext) {
+    if (SonarRuntimeUtils.isSonarLintContext(sensorContext.runtime())) {
+      // hasRelativePath throws in SQ-IDE, and its filesystem only holds the
+      // files under analysis, so a bot config would never be indexed there.
+      return false;
+    }
+    var fileSystem = sensorContext.fileSystem();
+    var predicates = fileSystem.predicates();
+    return BOT_CONFIG_PATHS.stream()
+      .anyMatch(path -> fileSystem.hasFiles(predicates.hasRelativePath(path)));
   }
 
   protected List<TreeVisitor<InputFileContext>> preCheckVisitors() {

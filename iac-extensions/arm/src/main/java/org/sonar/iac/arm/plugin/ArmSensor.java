@@ -38,6 +38,7 @@ import org.sonar.iac.common.extension.DurationStatistics;
 import org.sonar.iac.common.extension.IacProjectSensor;
 import org.sonar.iac.common.extension.SonarRuntimeUtils;
 import org.sonar.iac.common.extension.analyzer.SingleFileAnalyzer;
+import org.sonar.iac.common.extension.visitors.ChecksVisitor;
 import org.sonar.iac.common.extension.visitors.InputFileContext;
 import org.sonar.iac.common.extension.visitors.TreeVisitor;
 import org.sonar.iac.common.predicates.FileType;
@@ -114,7 +115,7 @@ public class ArmSensor extends AbstractYamlLanguageSensor {
   protected List<TreeVisitor<InputFileContext>> visitors(SensorContext sensorContext, DurationStatistics statistics) {
     List<TreeVisitor<InputFileContext>> visitors = new ArrayList<>();
     visitors.add(new ArmSymbolVisitor());
-    visitors.add(new ArmChecksVisitor(checks, statistics));
+    visitors.add(new ArmChecksVisitor(ChecksVisitor.activeChecks(checks), statistics));
     if (SonarRuntimeUtils.isNotSonarLintContext(sensorContext.runtime())) {
       visitors.add(new ArmMetricsVisitor(fileLinesContextFactory, noSonarFilter, sensorTelemetry));
       visitors.add(new ArmHighlightingVisitor());

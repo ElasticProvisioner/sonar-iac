@@ -16,9 +16,8 @@
  */
 package org.sonar.iac.terraform.visitors;
 
-import org.sonar.api.batch.rule.Checks;
+import java.util.List;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.iac.common.api.checks.IacCheck;
 import org.sonar.iac.common.api.checks.InitContext;
 import org.sonar.iac.common.extension.DurationStatistics;
 import org.sonar.iac.common.extension.visitors.ChecksVisitor;
@@ -28,8 +27,8 @@ import org.sonar.iac.terraform.plugin.TerraformProviders.Provider;
 public class TerraformChecksVisitor extends ChecksVisitor {
   private final TerraformProviders providerVersions;
 
-  public TerraformChecksVisitor(Checks<IacCheck> checks, DurationStatistics statistics, TerraformProviders providerVersions) {
-    super(checks, statistics);
+  public TerraformChecksVisitor(List<ActiveCheck> activeChecks, DurationStatistics statistics, TerraformProviders providerVersions) {
+    super(activeChecks, statistics);
     this.providerVersions = providerVersions;
   }
 

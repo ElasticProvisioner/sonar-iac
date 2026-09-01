@@ -29,7 +29,6 @@ import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.rule.RuleKey;
@@ -40,6 +39,7 @@ import org.sonar.iac.common.api.checks.TestFileSkipping;
 import org.sonar.iac.common.api.tree.Tree;
 import org.sonar.iac.common.api.tree.impl.TextRange;
 import org.sonar.iac.common.extension.DurationStatistics;
+import org.sonar.iac.common.extension.visitors.ChecksVisitor;
 import org.sonar.iac.common.extension.visitors.InputFileContext;
 import org.sonar.iac.common.filesystem.FileSystemUtils;
 import org.sonar.iac.common.languages.IacLanguage;
@@ -62,7 +62,7 @@ class KubernetesChecksVisitorTest {
   public LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.TRACE);
 
   private static final ProjectContext PROJECT_CONTEXT = mock(ProjectContext.class);
-  private final KubernetesChecksVisitor visitor = new KubernetesChecksVisitor(mock(Checks.class),
+  private final KubernetesChecksVisitor visitor = new KubernetesChecksVisitor(List.of(),
     new DurationStatistics(mock(Configuration.class)), PROJECT_CONTEXT, TestFileClassifier.of(mock(Configuration.class)));
   private KubernetesChecksVisitor.KubernetesContextAdapter context;
   private static final TextRange TREE_TEXT_RANGE = range(1, 0, 1, 1);
@@ -153,11 +153,8 @@ class KubernetesChecksVisitorTest {
   }
 
   private KubernetesChecksVisitor visitorWithCheck(IacCheck check, RuleKey ruleKey) {
-    org.sonar.api.batch.rule.Checks<IacCheck> checks = mock(org.sonar.api.batch.rule.Checks.class);
-    when(checks.all()).thenReturn(List.of(check));
-    when(checks.ruleKey(check)).thenReturn(ruleKey);
     when(tree.textRange()).thenReturn(TREE_TEXT_RANGE);
-    return new KubernetesChecksVisitor(checks,
+    return new KubernetesChecksVisitor(List.of(new ChecksVisitor.ActiveCheck(ruleKey, check)),
       new DurationStatistics(mock(Configuration.class)), PROJECT_CONTEXT, TestFileClassifier.of(mock(Configuration.class)));
   }
 
@@ -303,7 +300,7 @@ class KubernetesChecksVisitorTest {
 
   private KubernetesChecksVisitor prepareVisitorToRaise(String message, List<SecondaryLocation> secondaryLocations, ProjectContext projectContext) {
     KubernetesChecksVisitor specificVisitor = new KubernetesChecksVisitor(
-      mock(Checks.class),
+      List.of(),
       new DurationStatistics(mock(Configuration.class)),
       projectContext,
       TestFileClassifier.of(mock(Configuration.class)));
@@ -316,7 +313,7 @@ class KubernetesChecksVisitorTest {
 
   private KubernetesChecksVisitor prepareVisitorToRaiseNoLineShift(String message, TextRange textRange, ProjectContext projectContext) {
     KubernetesChecksVisitor specificVisitor = new KubernetesChecksVisitor(
-      mock(Checks.class),
+      List.of(),
       new DurationStatistics(mock(Configuration.class)),
       projectContext,
       TestFileClassifier.of(mock(Configuration.class)));

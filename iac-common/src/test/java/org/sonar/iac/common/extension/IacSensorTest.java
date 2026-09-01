@@ -570,7 +570,7 @@ class IacSensorTest extends AbstractSensorTest {
 
     @Override
     protected List<TreeVisitor<InputFileContext>> visitors(SensorContext sensorContext, DurationStatistics statistics) {
-      return Collections.singletonList(new ChecksVisitor(checkFactory.create(repositoryKey()), statistics));
+      return Collections.singletonList(new ChecksVisitor(ChecksVisitor.activeChecks(checkFactory.create(repositoryKey())), statistics));
     }
 
     @Override

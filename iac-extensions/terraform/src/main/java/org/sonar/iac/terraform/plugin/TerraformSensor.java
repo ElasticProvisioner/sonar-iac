@@ -30,6 +30,7 @@ import org.sonar.iac.common.extension.IacProjectSensor;
 import org.sonar.iac.common.extension.IacSensor;
 import org.sonar.iac.common.extension.SonarRuntimeUtils;
 import org.sonar.iac.common.extension.analyzer.SingleFileAnalyzer;
+import org.sonar.iac.common.extension.visitors.ChecksVisitor;
 import org.sonar.iac.common.extension.visitors.InputFileContext;
 import org.sonar.iac.common.extension.visitors.TreeVisitor;
 import org.sonar.iac.terraform.checks.TerraformCheckList;
@@ -69,7 +70,7 @@ public class TerraformSensor extends IacSensor {
       visitors.add(new TerraformMetricsVisitor(fileLinesContextFactory, noSonarFilter, sensorTelemetry));
       visitors.add(new TerraformHighlightingVisitor());
     }
-    visitors.add(new TerraformChecksVisitor(checks, statistics, providerVersions));
+    visitors.add(new TerraformChecksVisitor(ChecksVisitor.activeChecks(checks), statistics, providerVersions));
     return visitors;
   }
 

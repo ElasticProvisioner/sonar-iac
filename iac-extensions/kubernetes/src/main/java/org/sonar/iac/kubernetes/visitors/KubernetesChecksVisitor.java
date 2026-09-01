@@ -21,9 +21,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.iac.common.api.checks.IacCheck;
 import org.sonar.iac.common.api.checks.InitContext;
 import org.sonar.iac.common.api.checks.SecondaryLocation;
 import org.sonar.iac.common.api.tree.impl.TextRange;
@@ -46,11 +44,11 @@ public class KubernetesChecksVisitor extends ChecksVisitor {
 
   private final ProjectContext projectContext;
 
-  public KubernetesChecksVisitor(Checks<IacCheck> checks,
+  public KubernetesChecksVisitor(List<ActiveCheck> activeChecks,
     DurationStatistics statistics,
     ProjectContext projectContext,
     TestFileClassifier testFileClassifier) {
-    super(checks, statistics, testFileClassifier);
+    super(activeChecks, statistics, testFileClassifier);
     this.projectContext = projectContext;
   }
 

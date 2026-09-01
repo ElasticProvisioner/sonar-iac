@@ -118,10 +118,10 @@ public class JvmFrameworkConfigSensor extends IacSensor {
   protected List<TreeVisitor<InputFileContext>> visitors(SensorContext sensorContext, DurationStatistics statistics) {
     var visitors = new ArrayList<TreeVisitor<InputFileContext>>();
 
-    visitors.add(new ChecksVisitor(commonConfigChecks, statistics));
-    visitors.add(new ChecksVisitor(springConfigChecks, statistics));
-    visitors.add(new ChecksVisitor(micronautConfigChecks, statistics));
-    visitors.add(new ChecksVisitor(quarkusConfigChecks, statistics));
+    visitors.add(new ChecksVisitor(ChecksVisitor.activeChecks(commonConfigChecks), statistics));
+    visitors.add(new ChecksVisitor(ChecksVisitor.activeChecks(springConfigChecks), statistics));
+    visitors.add(new ChecksVisitor(ChecksVisitor.activeChecks(micronautConfigChecks), statistics));
+    visitors.add(new ChecksVisitor(ChecksVisitor.activeChecks(quarkusConfigChecks), statistics));
 
     if (SonarRuntimeUtils.isNotSonarLintContext(sensorContext.runtime())) {
       visitors.add(telemetryVisitor);

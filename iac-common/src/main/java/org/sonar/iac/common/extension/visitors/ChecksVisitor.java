@@ -16,7 +16,6 @@
  */
 package org.sonar.iac.common.extension.visitors;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -40,7 +39,10 @@ import org.sonarsource.analyzer.commons.appsec.TestFileClassifier;
 
 public class ChecksVisitor extends TreeVisitor<InputFileContext> {
 
-  protected final Checks<IacCheck> checks;
+  public record ActiveCheck(RuleKey ruleKey, IacCheck check) {
+  }
+
+  protected final List<ActiveCheck> activeChecks;
   protected final DurationStatistics statistics;
   @Nullable
   protected final TestFileClassifier testFileClassifier;
@@ -48,28 +50,30 @@ public class ChecksVisitor extends TreeVisitor<InputFileContext> {
   @Nullable
   private Set<RuleKey> testFileSkippingRules;
 
-  public ChecksVisitor(Checks<IacCheck> checks, DurationStatistics statistics) {
-    this(checks, statistics, null);
+  public ChecksVisitor(List<ActiveCheck> activeChecks, DurationStatistics statistics) {
+    this(activeChecks, statistics, null);
   }
 
-  public ChecksVisitor(Checks<IacCheck> checks, DurationStatistics statistics, @Nullable TestFileClassifier testFileClassifier) {
-    this.checks = checks;
+  public ChecksVisitor(List<ActiveCheck> activeChecks, DurationStatistics statistics, @Nullable TestFileClassifier testFileClassifier) {
+    this.activeChecks = activeChecks;
     this.statistics = statistics;
     this.testFileClassifier = testFileClassifier;
-    Collection<IacCheck> activeChecks = checks.all();
-    for (IacCheck check : activeChecks) {
-      var ruleKey = checks.ruleKey(check);
-      Objects.requireNonNull(ruleKey);
-      check.initialize(context(ruleKey));
+    for (ActiveCheck activeCheck : activeChecks) {
+      activeCheck.check().initialize(context(activeCheck.ruleKey()));
     }
+  }
+
+  public static List<ActiveCheck> activeChecks(Checks<IacCheck> checks) {
+    return checks.all().stream()
+      .map(check -> new ActiveCheck(Objects.requireNonNull(checks.ruleKey(check)), check))
+      .toList();
   }
 
   protected Set<RuleKey> testFileSkippingRules() {
     if (testFileSkippingRules == null) {
-      testFileSkippingRules = checks.all().stream()
-        .filter(TestFileSkipping.class::isInstance)
-        .map(checks::ruleKey)
-        .filter(Objects::nonNull)
+      testFileSkippingRules = activeChecks.stream()
+        .filter(activeCheck -> activeCheck.check() instanceof TestFileSkipping)
+        .map(ActiveCheck::ruleKey)
         .collect(Collectors.toUnmodifiableSet());
     }
     return testFileSkippingRules;

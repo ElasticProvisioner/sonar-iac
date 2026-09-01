@@ -61,7 +61,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(testCheck));
     when(checks.ruleKey(testCheck)).thenReturn(TEST_RULE_KEY);
 
-    new ChecksVisitor(checks, statistics);
+    new ChecksVisitor(activeChecks(), statistics);
 
     assertThat(initCalls).containsExactly("initialized");
   }
@@ -74,7 +74,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(testCheck));
     when(checks.ruleKey(testCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics);
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics);
 
     Tree child = new TestTree();
     Tree root = new TestTree(child);
@@ -92,7 +92,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(testCheck));
     when(checks.ruleKey(testCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics);
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics);
 
     SubTestTree subTree = new SubTestTree();
     Tree root = new TestTree(subTree);
@@ -110,7 +110,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(testCheck));
     when(checks.ruleKey(testCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics);
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics);
 
     Tree child = new TestTree();
     Tree root = new TestTree(child);
@@ -129,7 +129,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(testCheck));
     when(checks.ruleKey(testCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics);
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics);
 
     SubTestTree subTree = new SubTestTree();
     Tree root = new TestTree(subTree);
@@ -150,7 +150,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(testCheck));
     when(checks.ruleKey(testCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics);
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics);
 
     Tree child = new SubTestTree();
     Tree root = new TestTree(child);
@@ -168,7 +168,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(skippingCheck));
     when(checks.ruleKey(skippingCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics, TestFileClassifier.of(new MapSettings().asConfig()));
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics, TestFileClassifier.of(new MapSettings().asConfig()));
     visitor.scan(testFileCtx("test/pod.yaml"), new TestTree());
 
     assertThat(visited).isEmpty();
@@ -181,7 +181,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(skippingCheck));
     when(checks.ruleKey(skippingCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics, TestFileClassifier.of(new MapSettings().asConfig()));
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics, TestFileClassifier.of(new MapSettings().asConfig()));
     visitor.scan(testFileCtx("src/main/pod.yaml"), new TestTree());
 
     assertThat(visited).hasSize(1);
@@ -194,7 +194,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(skippingCheck));
     when(checks.ruleKey(skippingCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics, TestFileClassifier.of(new MapSettings().asConfig()));
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics, TestFileClassifier.of(new MapSettings().asConfig()));
     visitor.scan(testFileCtx("test/pod.yaml"), new TestTree());
 
     assertThat(visited).isEmpty();
@@ -207,7 +207,7 @@ class ChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(normalCheck));
     when(checks.ruleKey(normalCheck)).thenReturn(TEST_RULE_KEY);
 
-    ChecksVisitor visitor = new ChecksVisitor(checks, statistics, TestFileClassifier.of(new MapSettings().asConfig()));
+    ChecksVisitor visitor = new ChecksVisitor(activeChecks(), statistics, TestFileClassifier.of(new MapSettings().asConfig()));
     visitor.scan(testFileCtx("test/pod.yaml"), new TestTree());
 
     assertThat(visited).hasSize(1);
@@ -217,6 +217,10 @@ class ChecksVisitorTest {
     InputFile inputFile = mock(InputFile.class);
     when(inputFile.relativePath()).thenReturn(relativePath);
     return new InputFileContext(mock(SensorContext.class), inputFile, IacLanguage.UNKNOWN);
+  }
+
+  private List<ChecksVisitor.ActiveCheck> activeChecks() {
+    return ChecksVisitor.activeChecks(checks);
   }
 
   static class TestTree extends AbstractTestTree {

@@ -19,10 +19,8 @@ package org.sonar.iac.arm.visitors;
 import java.util.List;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.iac.arm.plugin.ArmSensor;
-import org.sonar.iac.common.api.checks.IacCheck;
 import org.sonar.iac.common.api.checks.InitContext;
 import org.sonar.iac.common.api.checks.SecondaryLocation;
 import org.sonar.iac.common.api.tree.impl.TextRange;
@@ -58,8 +56,8 @@ public class ArmChecksVisitor extends ChecksVisitor {
    */
   static final Set<String> RULES_USING_ARM_TEMPLATES_CONTEXT = Set.of("S4507", "S6329", "S6413");
 
-  public ArmChecksVisitor(Checks<IacCheck> checks, DurationStatistics statistics) {
-    super(checks, statistics);
+  public ArmChecksVisitor(List<ActiveCheck> activeChecks, DurationStatistics statistics) {
+    super(activeChecks, statistics);
   }
 
   @Override

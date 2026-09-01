@@ -41,6 +41,7 @@ import org.sonar.iac.common.api.checks.IacCheck;
 import org.sonar.iac.common.api.tree.impl.TextRange;
 import org.sonar.iac.common.api.tree.impl.TextRanges;
 import org.sonar.iac.common.extension.DurationStatistics;
+import org.sonar.iac.common.extension.visitors.ChecksVisitor;
 import org.sonar.iac.common.extension.visitors.InputFileContext;
 import org.sonar.iac.common.languages.IacLanguage;
 import org.sonar.scanner.plugin.api.impl.config.MapSettings;
@@ -169,7 +170,7 @@ class ArmChecksVisitorTest {
     when(checks.all()).thenReturn(List.of(check));
     when(checks.ruleKey(check)).thenReturn(ruleKey);
 
-    ArmChecksVisitor visitor = new ArmChecksVisitor(checks, statistics);
+    ArmChecksVisitor visitor = new ArmChecksVisitor(ChecksVisitor.activeChecks(checks), statistics);
     InputFileContext ifc = inputFileContext(fileLanguage);
     visitor.scan(ifc, new TestTree());
     return ifc;
